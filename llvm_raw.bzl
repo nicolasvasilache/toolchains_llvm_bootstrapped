@@ -1,28 +1,30 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-LLVM_VERSION = "21.1.8"
+# LLVM fork with Bazel overlay fixes (macOS Python linkopts, zlib-ng warning suppression).
+# Branch: nico-bazel at https://github.com/nicolasvasilache/llvm-project
+LLVM_COMMIT = "719086eb052f8da78167ff55fdf794c2e5e23b8a"
+LLVM_ARCHIVE_URL = "https://github.com/nicolasvasilache/llvm-project/archive/{commit}.tar.gz".format(commit = LLVM_COMMIT)
+LLVM_ARCHIVE_PREFIX = "llvm-project-{commit}".format(commit = LLVM_COMMIT)
 
 def _llvm_raw_impl(mctx):
     http_archive(
         name = "llvm-raw",
         build_file_content = "# EMPTY",
-        sha256 = "4633a23617fa31a3ea51242586ea7fb1da7140e426bd62fc164261fe036aa142",
-        patch_args = ["-p1"],
-        patches = [
-            "//third_party/llvm-project:llvm-extra.patch",
-            "//third_party/llvm-project:llvm-bazel9.patch",
-            "//third_party/llvm-project:llvm-dsymutil-corefoundation.patch",
-            "//third_party/llvm-project:llvm-sanitizers-ignorelists.patch",
-            "//third_party/llvm-project:windows_link_and_genrule.patch",
-            "//third_party/llvm-project:bundle_resources_no_python.patch",
-            "//third_party/llvm-project:no_frontend_builtin_headers.patch",
-            "//third_party/llvm-project:no_zlib_genrule.patch",
-            "//third_party/llvm-project:no_rules_python.patch",
-            "//third_party/llvm-project:llvm-overlay-starlark.patch",
-        ],
-        strip_prefix = "llvm-project-{LLVM_VERSION}.src".format(LLVM_VERSION = LLVM_VERSION),
-        urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{LLVM_VERSION}/llvm-project-{LLVM_VERSION}.src.tar.xz".format(LLVM_VERSION = LLVM_VERSION)],
+        sha256 = "",
+        strip_prefix = LLVM_ARCHIVE_PREFIX,
+        urls = [LLVM_ARCHIVE_URL],
     )
+
+    # Runtime library repos for cross-compilation toolchains.
+    # Uses the same archive URL (Bazel caches the download) with subdirectory strip prefixes.
+    for lib in ["compiler-rt", "libcxx", "libcxxabi", "libunwind"]:
+        http_archive(
+            name = lib,
+            build_file = Label("//third_party/llvm-project/20.x/{lib}:BUILD.tpl".format(lib = lib)),
+            sha256 = "",
+            strip_prefix = LLVM_ARCHIVE_PREFIX + "/" + lib,
+            urls = [LLVM_ARCHIVE_URL],
+        )
 
     http_archive(
         name = "llvm_zlib",

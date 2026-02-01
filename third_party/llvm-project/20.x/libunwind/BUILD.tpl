@@ -50,7 +50,6 @@ cc_library(
         "-fno-rtti",
     ],
     linkopts = [
-        "--unwindlib=none",
     ],
     local_defines = [
         # This is intentionally always defined because the macro definition means, should it only

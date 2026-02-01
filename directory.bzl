@@ -18,7 +18,7 @@ def headers_directory(name, path, visibility = None):
 
     native.filegroup(
         name = name + "_source_directory",
-        srcs = [path],
+        srcs = native.glob([path + "/**"], exclude_directories = 1),
     )
 
     _headers_directory(
@@ -47,4 +47,3 @@ _headers_directory = rule(
         "source_directory": attr.label(),
     },
 )
-

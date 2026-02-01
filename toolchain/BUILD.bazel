@@ -290,7 +290,6 @@ cc_args_list(
         ":libunwind_library_search_paths",
         ":rtlib",
         ":stdlib",
-        ":unwindlib",
         ":resource_dir",
         ":default_link_flags",
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
